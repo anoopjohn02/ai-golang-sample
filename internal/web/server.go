@@ -46,8 +46,16 @@ func NewService(deviceContext *commons.DeviceContext) *RestService {
 
 func setupRoutes(engine *gin.Engine, deviceContext *commons.DeviceContext) {
 	engine.GET("/api/ping", ping)
-	engine.Static("/static", "./static")
+	engine.Static("/ui", "./static")
 	engine.StaticFile("/", "./static/index.html")
+	v1 := engine.Group("/v1")
+	{
+		chats := v1.Group("/chat")
+		{
+			chatController := NewChatController()
+			chats.POST("/stream", chatController.StreamChat)
+		}
+	}
 }
 
 func ping(c *gin.Context) {

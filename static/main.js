@@ -6,17 +6,17 @@ const PERSON_NAME = "Anoop";
 new_chat = true;
 var msgerForm, msgerInput, msgerChat
 document.addEventListener('DOMContentLoaded', function () {
-    msgerForm = get(".msger-inputarea");
-    msgerInput = get(".msger-input");
-    msgerChat = get(".msger-chat");
-    msgerForm.addEventListener("submit", event => {
-        event.preventDefault();
-        const msgText = msgerInput.value;
-        if (!msgText) return;
-        appendMessage(PERSON_NAME, PERSON_IMG, "right", msgText);
-        msgerInput.value = "";
-        botResponse(msgText);
-    });
+  msgerForm = get(".msger-inputarea");
+  msgerInput = get(".msger-input");
+  msgerChat = get(".msger-chat");
+  msgerForm.addEventListener("submit", event => {
+    event.preventDefault();
+    const msgText = msgerInput.value;
+    if (!msgText) return;
+    appendMessage(PERSON_NAME, PERSON_IMG, "right", msgText);
+    msgerInput.value = "";
+    botResponse(msgText);
+  });
 });
 
 function appendMessage(name, img, side, text) {
@@ -48,7 +48,7 @@ function botResponse(msgText) {
     new_chat: new_chat
   };
   var messageId = appendMessage(BOT_NAME, BOT_IMG, "left", "");
-  processStreamingResponse('http://localhost:8080/v1/test/stream', messageId, chatMessage)
+  processStreamingResponse('http://localhost:8080/v1/chat/stream', messageId, chatMessage)
 }
 
 // Utils
