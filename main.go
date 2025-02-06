@@ -14,6 +14,14 @@ func main() {
 	log.Printf("Starting Sample App...")
 	context := Context()
 	doc := service.NewDocumentService(context)
+
+	pdfPath := "spice.pdf" //hard code for time being
+	textArray, err := doc.readPdf(pdfPath)
+	if err != nil {
+		log.Fatalf("Error reading PDF: %v", err)
+	}
+	doc.add(textArray)
+
 	webService := web.NewService(context, doc)
 	webService.Start()
 	log.Printf("Application Started...")

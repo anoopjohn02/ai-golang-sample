@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"github.com/anoopjohn02/ai-golang-sample/internal/commons"
+	"github.com/pdfcpu/pdfcpu/pkg/api"
+	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu"
 	"github.com/tmc/langchaingo/embeddings"
 	"github.com/tmc/langchaingo/schema"
 	"github.com/tmc/langchaingo/vectorstores/weaviate"
@@ -17,12 +19,13 @@ type DocumentService struct {
 
 func NewDocumentService(ctx *commons.AIContext) *DocumentService {
 
+	log.Printf("Document service...")
 	emb, err := embeddings.NewEmbedder(ctx.LLM)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	wvStore, err := weaviate.New(
+	wvStore, _ := weaviate.New(
 		weaviate.WithEmbedder(emb),
 		weaviate.WithScheme("http"),
 		weaviate.WithHost("localhost:9035"),
@@ -35,7 +38,28 @@ func NewDocumentService(ctx *commons.AIContext) *DocumentService {
 	}
 }
 
+func (d *DocumentService) readPdf(pdfPath string) ([]string, error) {
+	log.Printf("Document service...")
+	pdfConfig := pdfcpu.NewDefaultConfiguration()
+	doc, err := api.ReadContextFile(pdfPath, pdfConfig, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var pages []string
+	for i := 0; i < len(doc.PageCount); i++ {
+		text, err := api.ExtractTextFile(pdfPath, nil, nil, i+1, i+1)
+		if err != nil {
+			return nil, err
+		}
+		pages = append(pages, text)
+	}
+
+	return pages, nil
+}
+
 func (d *DocumentService) add(docs []string) {
+	log.Printf("Adding documents to vector db")
 	// Store documents and their embeddings in weaviate
 	var wvDocs []schema.Document
 	for _, doc := range docs {
