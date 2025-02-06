@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/anoopjohn02/ai-golang-sample/internal/service"
 	"github.com/tmc/langchaingo/llms"
 )
 
 type ChatService struct {
+	doc service.DocumentService
 }
 
 func NewChatService() *ChatService {
@@ -15,7 +17,7 @@ func NewChatService() *ChatService {
 }
 
 func (s *ChatService) BuildContent(query string) []llms.MessageContent {
-
+	docsContents := s.doc.search(query)
 	context := fmt.Sprintf(systemMessage, strings.Join(docsContents, "\n"))
 	content := []llms.MessageContent{
 		llms.TextParts(llms.ChatMessageTypeSystem, context),
