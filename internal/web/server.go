@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/anoopjohn02/ai-golang-sample/internal/commons"
+	"github.com/anoopjohn02/ai-golang-sample/internal/service"
 	"github.com/gin-gonic/gin"
 )
 
@@ -33,9 +34,9 @@ func (r *RestService) Stop() {
 	}
 }
 
-func NewService(deviceContext *commons.DeviceContext) *RestService {
+func NewService(ctx *commons.AIContext, doc *service.DocumentService) *RestService {
 	engine := gin.Default()
-	setupRoutes(engine, deviceContext)
+	setupRoutes(engine, ctx, doc)
 
 	return &RestService{
 		engine: engine,
@@ -44,7 +45,7 @@ func NewService(deviceContext *commons.DeviceContext) *RestService {
 	}
 }
 
-func setupRoutes(engine *gin.Engine, deviceContext *commons.DeviceContext) {
+func setupRoutes(engine *gin.Engine, ctx *commons.AIContext, doc *service.DocumentService) {
 	engine.GET("/api/ping", ping)
 	engine.Static("/ui", "./static")
 	engine.StaticFile("/", "./static/index.html")
@@ -52,7 +53,7 @@ func setupRoutes(engine *gin.Engine, deviceContext *commons.DeviceContext) {
 	{
 		chats := v1.Group("/chat")
 		{
-			chatController := NewChatController()
+			chatController := NewChatController(ctx, doc)
 			chats.POST("/stream", chatController.StreamChat)
 		}
 	}

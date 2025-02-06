@@ -7,19 +7,23 @@ import (
 
 	"net/http"
 
+	"github.com/anoopjohn02/ai-golang-sample/internal/commons"
 	"github.com/anoopjohn02/ai-golang-sample/internal/models"
 	"github.com/anoopjohn02/ai-golang-sample/internal/service"
 	"github.com/gin-gonic/gin"
 	"github.com/tmc/langchaingo/llms"
-	"github.com/tmc/langchaingo/llms/openai"
 )
 
 type ChatController struct {
+	ctx *commons.AIContext
 	ser service.ChatService
 }
 
-func NewChatController() *ChatController {
-	return &ChatController{ser: *service.NewChatService()}
+func NewChatController(ctx *commons.AIContext, doc *service.DocumentService) *ChatController {
+	return &ChatController{
+		ser: *service.NewChatService(ctx, doc),
+		ctx: ctx,
+	}
 }
 
 func (s *ChatController) StreamChat(c *gin.Context) {
@@ -34,13 +38,8 @@ func (s *ChatController) StreamChat(c *gin.Context) {
 		return
 	}
 
-	ctx := context.Background()
-	llm, err := openai.New()
-	if err != nil {
-		log.Fatal(err)
-	}
 	content := s.ser.BuildContent(chat.Question)
-	completion, err := llm.GenerateContent(ctx, content, llms.WithStreamingFunc(func(ctx context.Context, chunk []byte) error {
+	completion, err := s.ctx.LLM.GenerateContent(s.ctx.Context, content, llms.WithStreamingFunc(func(ctx context.Context, chunk []byte) error {
 		fmt.Fprintf(c.Writer, string(chunk))
 		c.Writer.Flush()
 		return nil
