@@ -1,13 +1,15 @@
 package service
 
 import (
+	"bufio"
+	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/anoopjohn02/ai-golang-sample/internal/commons"
-	"github.com/pdfcpu/pdfcpu/pkg/api"
-	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu"
 	"github.com/tmc/langchaingo/embeddings"
+	"github.com/tmc/langchaingo/llms/openai"
 	"github.com/tmc/langchaingo/schema"
 	"github.com/tmc/langchaingo/vectorstores/weaviate"
 )
@@ -20,7 +22,9 @@ type DocumentService struct {
 func NewDocumentService(ctx *commons.AIContext) *DocumentService {
 
 	log.Printf("Document service...")
-	emb, err := embeddings.NewEmbedder(ctx.LLM)
+
+	embeddingsClient, err := openai.New(openai.WithModel("text-embedding-ada-002"))
+	emb, err := embeddings.NewEmbedder(embeddingsClient)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -38,27 +42,34 @@ func NewDocumentService(ctx *commons.AIContext) *DocumentService {
 	}
 }
 
-func (d *DocumentService) readPdf(pdfPath string) ([]string, error) {
-	log.Printf("Document service...")
-	pdfConfig := pdfcpu.NewDefaultConfiguration()
-	doc, err := api.ReadContextFile(pdfPath, pdfConfig, nil)
+func (d *DocumentService) ReadFile(filePath string) ([]string, error) {
+	log.Printf("Reading documents")
+	file, err := os.Open(filePath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error opening file: %v", err)
+	}
+	defer file.Close()
+
+	// Create a scanner to read the file
+	scanner := bufio.NewScanner(file)
+
+	// Create a slice to store the lines
+	var lines []string
+
+	// Read line by line
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
 	}
 
-	var pages []string
-	for i := 0; i < len(doc.PageCount); i++ {
-		text, err := api.ExtractTextFile(pdfPath, nil, nil, i+1, i+1)
-		if err != nil {
-			return nil, err
-		}
-		pages = append(pages, text)
+	// Check for errors during scanning
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("error reading file: %v", err)
 	}
 
-	return pages, nil
+	return lines, nil
 }
 
-func (d *DocumentService) add(docs []string) {
+func (d *DocumentService) AddDocs(docs []string) {
 	log.Printf("Adding documents to vector db")
 	// Store documents and their embeddings in weaviate
 	var wvDocs []schema.Document

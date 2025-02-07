@@ -15,12 +15,12 @@ func main() {
 	context := Context()
 	doc := service.NewDocumentService(context)
 
-	pdfPath := "spice.pdf" //hard code for time being
-	textArray, err := doc.readPdf(pdfPath)
+	pdfPath := "spice.pdf" //hard code for time
+	textArray, err := doc.ReadFile(pdfPath)
 	if err != nil {
 		log.Fatalf("Error reading PDF: %v", err)
 	}
-	doc.add(textArray)
+	doc.AddDocs(textArray)
 
 	webService := web.NewService(context, doc)
 	webService.Start()
