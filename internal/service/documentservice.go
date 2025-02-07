@@ -74,11 +74,23 @@ func (d *DocumentService) AddDocs(docs []string) {
 	// Store documents and their embeddings in weaviate
 	var wvDocs []schema.Document
 	for _, doc := range docs {
-		wvDocs = append(wvDocs, schema.Document{PageContent: doc})
+		if strings.TrimSpace(doc) != "" {
+			wvDocs = append(wvDocs, schema.Document{PageContent: doc})
+		}
 	}
-	_, err := d.wvStore.AddDocuments(d.ctx.Context, wvDocs)
-	if err != nil {
-		log.Fatal(err)
+
+	log.Printf("Document batch size: %d", len(wvDocs))
+	batchSize := 5 // Experiment with smaller batch sizes
+	for i := 0; i < len(wvDocs); i += batchSize {
+		end := i + batchSize
+		if end > len(wvDocs) {
+			end = len(wvDocs)
+		}
+		log.Printf("Processing: %d - %d", i, end)
+		_, err := d.wvStore.AddDocuments(d.ctx.Context, wvDocs[i:end])
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 
